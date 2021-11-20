@@ -39,7 +39,7 @@ instance_profile = aws.iam.InstanceProfile(
 
 ami = aws.ec2.get_ami(most_recent=True,
                   owners=["amazon"],
-                  filters=[aws.GetAmiFilterArgs(name="name", values=["amzn-ami-hvm-*"])])
+                  filters=[aws.GetAmiFilterArgs(name="name", values=["amzn2-ami-kernel-5.10*"])])
 
 group = aws.ec2.SecurityGroup('all-traffic',
     description='Enable HTTP access',
@@ -121,3 +121,46 @@ frontend = aws.ec2.Instance('frontend',
     })
 
 pulumi.export('frontend public_ip', frontend.public_ip)
+pulumi.export('frontend endpoint', pulumi.Output.all([frontend.public_ip]).apply(lambda args:
+            "http://{}:8080/api/test?delay=1".format(args[0][0])
+        )
+    )
+    
+userdata_frontend_webflix = pulumi.Output.all([backend.public_ip]).apply(lambda args:
+    """#!/bin/bash
+    # install 
+    sudo yum update -y
+    sudo yum install java-11-amazon-corretto -y
+    sudo wget https://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-maven.repo -O /etc/yum.repos.d/epel-apache-maven.repo
+    sudo sed -i s/\$releasever/6/g /etc/yum.repos.d/epel-apache-maven.repo
+    sudo yum install -y apache-maven
+    sudo yum install java-1.8.0-devel -y
+    sudo update-alternatives --set java /usr/lib/jvm/java-11-amazon-corretto.x86_64/bin/java
+    sudo yum install -y git
+    
+    # run
+    git clone https://github.com/andy-ecloud/cloud-edge-lab-template.git /cloud-edge-lab-template
+    mvn install -f /cloud-edge-lab-template/api-parent/pom.xml
+    mvn install -f /cloud-edge-lab-template/api-frontend-webflux/pom.xml
+    
+    sed -i 's/localhost/{}/g' /cloud-edge-lab-template/api-frontend-webflux/src/main/resources/application.yml 
+    mvn spring-boot:run -f /cloud-edge-lab-template/api-frontend-webflux/pom.xml
+    """.format(args[0][0])
+)
+    
+frontend_webflux = aws.ec2.Instance('frontend_webflux',
+    instance_type='t3.micro',
+    iam_instance_profile=instance_profile.name,
+    vpc_security_group_ids=[group.id],
+    user_data=userdata_frontend_webflix,
+    ami=ami.id,
+    key_name=keypair.id,
+    tags={
+        "Name": "frontend_webflux"
+    })
+
+pulumi.export('frontend_webflux public_ip', frontend_webflux.public_ip)
+pulumi.export('frontend_webflux endpoint', pulumi.Output.all([frontend_webflux.public_ip]).apply(lambda args:
+            "http://{}:8080/api/test?delay=1".format(args[0][0])
+        )
+    )
