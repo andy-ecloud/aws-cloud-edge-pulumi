@@ -72,6 +72,7 @@ keypair = aws.ec2.KeyPair("keypair",
     public_key=private_key.public_key_openssh)
 
 backend = aws.ec2.Instance('backend',
+    associate_public_ip_address=False,
     instance_type='t3.micro',
     iam_instance_profile=instance_profile.name,
     vpc_security_group_ids=[group.id],
@@ -84,10 +85,10 @@ backend = aws.ec2.Instance('backend',
         "Name": "backend"
     })
 
-pulumi.export('backend public_ip', backend.public_ip)
+pulumi.export('backend private_ip', backend.private_ip)
 
 
-userdata_frontend = pulumi.Output.all([backend.public_ip]).apply(lambda args:
+userdata_frontend = pulumi.Output.all([backend.private_ip]).apply(lambda args:
     """#!/bin/bash
     # install 
     sudo yum update -y
@@ -120,13 +121,13 @@ frontend = aws.ec2.Instance('frontend',
         "Name": "frontend"
     })
 
-pulumi.export('frontend public_ip', frontend.public_ip)
+# pulumi.export('frontend public_ip', frontend.public_ip)
 pulumi.export('frontend endpoint', pulumi.Output.all([frontend.public_ip]).apply(lambda args:
             "http://{}:8080/api/test?delay=1".format(args[0][0])
         )
     )
     
-userdata_frontend_webflix = pulumi.Output.all([backend.public_ip]).apply(lambda args:
+userdata_frontend_webflix = pulumi.Output.all([backend.private_ip]).apply(lambda args:
     """#!/bin/bash
     # install 
     sudo yum update -y
@@ -159,7 +160,7 @@ frontend_webflux = aws.ec2.Instance('frontend_webflux',
         "Name": "frontend_webflux"
     })
 
-pulumi.export('frontend_webflux public_ip', frontend_webflux.public_ip)
+# pulumi.export('frontend_webflux public_ip', frontend_webflux.public_ip)
 pulumi.export('frontend_webflux endpoint', pulumi.Output.all([frontend_webflux.public_ip]).apply(lambda args:
             "http://{}:8080/api/test?delay=1".format(args[0][0])
         )
