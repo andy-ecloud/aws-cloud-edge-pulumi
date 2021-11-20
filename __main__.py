@@ -97,12 +97,12 @@ userdata_frontend = pulumi.Output.all([backend.public_ip]).apply(lambda args:
     sudo update-alternatives --set java /usr/lib/jvm/java-11-amazon-corretto.x86_64/bin/java
     
     # run
-    git clone https://github.com/andy-ecloud/cloud-edge-lab-template.git ~/cloud-edge-lab-template
-    mvn install -f ~/cloud-edge-lab-template/api-parent/pom.xml
-    mvn install -f ~/cloud-edge-lab-template/api-frontend/pom.xml
+    git clone https://github.com/andy-ecloud/cloud-edge-lab-template.git /cloud-edge-lab-template
+    mvn install -f /cloud-edge-lab-template/api-parent/pom.xml
+    mvn install -f /cloud-edge-lab-template/api-frontend/pom.xml
     
-    sed -i 's/localhost/{}/g' ~/cloud-edge-lab-template/api-frontend/src/main/resources/application.yml 
-    mvn spring-boot:run -f ~/cloud-edge-lab-template/api-frontend/pom.xml
+    sed -i 's/localhost/{}/g' /cloud-edge-lab-template/api-frontend/src/main/resources/application.yml 
+    mvn spring-boot:run -f /cloud-edge-lab-template/api-frontend/pom.xml
     """.format(args[0][0])
 )
 
