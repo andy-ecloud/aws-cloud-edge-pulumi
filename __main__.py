@@ -3,39 +3,39 @@ import pulumi_aws as aws
 import pulumi_tls as tls
 import json
 
-admin_policy = aws.iam.get_policy(name="AdministratorAccess")
-pulumi.export("iam ssm policy", admin_policy.arn)
+# admin_policy = aws.iam.get_policy(name="AdministratorAccess")
+# pulumi.export("iam ssm policy", admin_policy.arn)
 
-# create role (cloud watch agent and ssm)
-admin_role = aws.iam.Role(
-    "ad_profile",
-    name="ad_profile",
-    assume_role_policy=json.dumps(
-        {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Action": "sts:AssumeRole",
-                    "Effect": "Allow",
-                    "Sid": "",
-                    "Principal": {
-                        "Service": "ec2.amazonaws.com",
-                    },
-                }
-            ],
-        }
-    ),
-    managed_policy_arns=[
-        admin_policy.arn,
-    ],
-    tags={
-        "Owner": "andy.chuang",
-    },
-    )
+# # create role (cloud watch agent and ssm)
+# admin_role = aws.iam.Role(
+#     "ad_profile",
+#     name="ad_profile",
+#     assume_role_policy=json.dumps(
+#         {
+#             "Version": "2012-10-17",
+#             "Statement": [
+#                 {
+#                     "Action": "sts:AssumeRole",
+#                     "Effect": "Allow",
+#                     "Sid": "",
+#                     "Principal": {
+#                         "Service": "ec2.amazonaws.com",
+#                     },
+#                 }
+#             ],
+#         }
+#     ),
+#     managed_policy_arns=[
+#         admin_policy.arn,
+#     ],
+#     tags={
+#         "Owner": "andy.chuang",
+#     },
+#     )
 
-instance_profile = aws.iam.InstanceProfile(
-    "instance-profile", role=admin_role.name
-)
+# instance_profile = aws.iam.InstanceProfile(
+#     "instance-profile", role=admin_role.name
+# )
 
 ami = aws.ec2.get_ami(most_recent=True,
                   owners=["amazon"],
@@ -74,7 +74,7 @@ keypair = aws.ec2.KeyPair("keypair",
 backend = aws.ec2.Instance('backend',
     associate_public_ip_address=False,
     instance_type='t3.micro',
-    iam_instance_profile=instance_profile.name,
+#     iam_instance_profile=instance_profile.name,
     vpc_security_group_ids=[group.id],
     user_data=(lambda path: open(path).read())(
         "./userdata_backend.sh"
@@ -112,7 +112,7 @@ userdata_frontend = pulumi.Output.all([backend.private_ip]).apply(lambda args:
 
 frontend = aws.ec2.Instance('frontend',
     instance_type='t3.micro',
-    iam_instance_profile=instance_profile.name,
+#     iam_instance_profile=instance_profile.name,
     vpc_security_group_ids=[group.id],
     user_data=userdata_frontend,
     ami=ami.id,
@@ -151,7 +151,7 @@ userdata_frontend_webflix = pulumi.Output.all([backend.private_ip]).apply(lambda
     
 frontend_webflux = aws.ec2.Instance('frontend_webflux',
     instance_type='t3.micro',
-    iam_instance_profile=instance_profile.name,
+#     iam_instance_profile=instance_profile.name,
     vpc_security_group_ids=[group.id],
     user_data=userdata_frontend_webflix,
     ami=ami.id,
