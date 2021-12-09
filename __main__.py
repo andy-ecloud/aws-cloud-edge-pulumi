@@ -145,7 +145,7 @@ userdata_frontend_webflix = pulumi.Output.all([backend.private_ip]).apply(lambda
     mvn install -f /cloud-edge-lab-template/api-frontend-webflux/pom.xml
     
     sed -i 's/localhost/{}/g' /cloud-edge-lab-template/api-frontend-webflux/src/main/resources/application.yml 
-    mvn spring-boot:run -f /cloud-edge-lab-template/api-frontend-webflux/pom.xml
+    mvn spring-boot:run -f /cloud-edge-lab-template/api-frontend-webflux/pom.xml -Dreactor.netty.ioWorkerCount=4
     """.format(args[0][0])
 )
     
